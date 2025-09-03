@@ -4,6 +4,7 @@ body {
 	margin: 0;
 }
 #word {
+	user-select: none;
 	font-family: "Megrim", cursive;
 	font-size: 10vh;
 	position: absolute;

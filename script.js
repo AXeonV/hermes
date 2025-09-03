@@ -17,9 +17,9 @@ window.addEventListener("resize", (event) => {
 // let texture = textureLoader.load(
 // 	"./your-local-image.jpg",
 // 	(texture) => {
-//   	texture.mapping = THREE.EquirectangularReflectionMapping;
-//   	scene.background = texture;
-//   }
+//	 	texture.mapping = THREE.EquirectangularReflectionMapping;
+//	 	scene.background = texture;
+//	 }
 // );
 
 let controls = new THREE.OrbitControls(camera, renderer.domElement);
