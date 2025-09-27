@@ -7,11 +7,43 @@ camera.position.set(0, 4, 21);
 let renderer = new THREE.WebGLRenderer();
 renderer.setSize(innerWidth, innerHeight);
 document.body.appendChild(renderer.domElement);
-window.addEventListener("resize", (event) => {
+
+function fullscreen() {
+	const el = renderer && renderer.domElement ? renderer.domElement : document.documentElement;
+	const doc = document;
+	const isFs = doc.fullscreenElement || doc.webkitFullscreenElement || doc.msFullscreenElement;
+	const request = el.requestFullscreen || el.webkitRequestFullscreen || el.msRequestFullscreen;
+	const exit = doc.exitFullscreen || doc.webkitExitFullscreen || doc.msExitFullscreen;
+	const done = () => requestAnimationFrame(updateViewport);
+	if (!isFs && request) {
+		try {
+			const ret = request.call(el);
+			if (ret && typeof ret.then === 'function') ret.finally(done); else setTimeout(done, 0);
+		} catch (_) {
+			setTimeout(done, 0);
+		}
+	} else if (isFs && exit) {
+		try {
+			const ret = exit.call(doc);
+			if (ret && typeof ret.then === 'function') ret.finally(done); else setTimeout(done, 0);
+		} catch (_) {
+			setTimeout(done, 0);
+		}
+	} else {
+		done();
+	}
+}
+
+function updateViewport() {
 	camera.aspect = innerWidth / innerHeight;
 	camera.updateProjectionMatrix();
 	renderer.setSize(innerWidth, innerHeight);
-});
+}
+
+window.addEventListener('resize', updateViewport);
+document.addEventListener('fullscreenchange', () => requestAnimationFrame(updateViewport));
+document.addEventListener('webkitfullscreenchange', () => requestAnimationFrame(updateViewport));
+document.addEventListener('MSFullscreenChange', () => requestAnimationFrame(updateViewport));
 
 // let textureLoader = new THREE.TextureLoader();
 // let texture = textureLoader.load(
