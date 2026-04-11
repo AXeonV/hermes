@@ -35,12 +35,17 @@ let gu = {
   morphB: { value: 0 }
 };
 
-const TIMING = {
+let TIMING = {
   holdA: 6.0,
   transAB: 2.0,
   holdB: 6.0,
   transBS: 3.0
 };
+  
+let SENTENCES = [
+  ["你好呀，", "生日快乐哟~"],
+  ["愿你笑容常在，", "每天幸福快乐！"]
+];
 
 function transfer(elapsed, start, duration) {
   if (elapsed <= start) return 0;
@@ -48,11 +53,6 @@ function transfer(elapsed, start, duration) {
   t = THREE.MathUtils.clamp(t, 0, 1);
   return Math.sin(t * Math.PI * 0.5);
 }
-  
-let SENTENCES = [
-  ["你好呀，", "生日快乐哟~"],
-  ["愿你笑容常在，", "每天幸福快乐！"]
-];
 
 function buildTextLayout(lines) {
   let points = [];
