@@ -32,27 +32,22 @@ controls.enablePan = true;
 let gu = {
   time: { value: 0 },
   morphA: { value: 0 },
-  morphB: { value: 0 }
+  morphB: { value: 0 },
+  morphC: { value: 0 }
 };
 
 let TIMING = {
-  holdA: 6.0,
-  transAB: 2.0,
-  holdB: 6.0,
-  transBS: 3.0
+  dur: 3.0,
+  t1: 10.0,
+  t2: 23.0,
+  t3: 52.0,
+  flip: false
 };
-  
+
 let SENTENCES = [
   ["你好呀，", "生日快乐哟~"],
   ["愿你笑容常在，", "每天幸福快乐！"]
 ];
-
-function transfer(elapsed, start, duration) {
-  if (elapsed <= start) return 0;
-  let t = (elapsed - start) / duration;
-  t = THREE.MathUtils.clamp(t, 0, 1);
-  return Math.sin(t * Math.PI * 0.5);
-}
 
 function buildTextLayout(lines) {
   let points = [];
@@ -103,7 +98,42 @@ function buildTextLayout(lines) {
   return { points, positions };
 }
 
-function buildStarLayout() {
+function buildStarALayout() {
+  let points = [];
+  let positions = [];
+
+  points = new Array(3e5).fill().map(() => {
+    let p = new THREE.Vector3()
+      .randomDirection()
+      .multiplyScalar(Math.random() * 12.0 + 2.0);
+    positions.push(p.x, p.y, p.z);
+    return p;
+  });
+
+  let disList = [-3.0, 7.0, 17.0, 27.0];
+  let tiltByRing = [
+    new THREE.Matrix4().makeRotationX(THREE.MathUtils.degToRad(45)),
+    new THREE.Matrix4().makeRotationX(THREE.MathUtils.degToRad(-45)),
+    new THREE.Matrix4().makeRotationZ(THREE.MathUtils.degToRad(45)),
+    new THREE.Matrix4().makeRotationZ(THREE.MathUtils.degToRad(-45))
+  ];
+  for (let i = 1; i <= 2e5; ++i) {
+    for (let j = 0; j < disList.length; j++) {
+      let radius = Math.log2(i * 520.0) + 1.0;
+      let theta = Math.random() * 2 * Math.PI;
+      let h = (Math.random() - 0.5) * 2;
+      let p = new THREE.Vector3(Math.cos(theta) * radius, h, Math.sin(theta) * radius);
+      p.applyMatrix4(tiltByRing[j]);
+
+      points.push(p);
+      positions.push(p.x, p.y, p.z);
+    }
+  }
+
+  return { points, positions };
+}
+
+function buildStarBLayout() {
   let points = [];
   let positions = [];
 
@@ -132,9 +162,10 @@ function buildStarLayout() {
   return { points, positions };
 }
 
-let starLayout = buildStarLayout();
-let textLayoutA = buildTextLayout(SENTENCES[0]);
-let textLayoutB = buildTextLayout(SENTENCES[1]);
+let starALayout = buildStarALayout();
+let starBLayout = buildStarBLayout();
+let textALayout = buildTextLayout(SENTENCES[0]);
+let textBLayout = buildTextLayout(SENTENCES[1]);
 let sizes = [];
 let shift = [];
 for (let i = 0; i < 11e5; i++) {
@@ -147,12 +178,13 @@ for (let i = 0; i < 11e5; i++) {
   );
 }
 
-let g = new THREE.BufferGeometry().setFromPoints(starLayout.points);
+let g = new THREE.BufferGeometry().setFromPoints(starBLayout.points);
 g.setAttribute("sizes", new THREE.Float32BufferAttribute(sizes, 1));
 g.setAttribute("shift", new THREE.Float32BufferAttribute(shift, 4));
-g.setAttribute("layoutTextA", new THREE.Float32BufferAttribute(textLayoutA.positions, 3));
-g.setAttribute("layoutTextB", new THREE.Float32BufferAttribute(textLayoutB.positions, 3));
-g.setAttribute("layoutStar", new THREE.Float32BufferAttribute(starLayout.positions, 3));
+g.setAttribute("layoutTextA", new THREE.Float32BufferAttribute(textALayout.positions, 3));
+g.setAttribute("layoutTextB", new THREE.Float32BufferAttribute(textBLayout.positions, 3));
+g.setAttribute("layoutStarA", new THREE.Float32BufferAttribute(starALayout.positions, 3));
+g.setAttribute("layoutStarB", new THREE.Float32BufferAttribute(starBLayout.positions, 3));
 
 let m = new THREE.PointsMaterial({
   size: 0.125,
@@ -163,15 +195,18 @@ let m = new THREE.PointsMaterial({
     shader.uniforms.time = gu.time;
     shader.uniforms.morphA = gu.morphA;
     shader.uniforms.morphB = gu.morphB;
+    shader.uniforms.morphC = gu.morphC;
     shader.vertexShader = `
       uniform float time;
       uniform float morphA;
       uniform float morphB;
+      uniform float morphC;
       attribute float sizes;
       attribute vec4 shift;
       attribute vec3 layoutTextA;
       attribute vec3 layoutTextB;
-      attribute vec3 layoutStar;
+      attribute vec3 layoutStarA;
+      attribute vec3 layoutStarB;
       varying vec3 vColor;
       ${shader.vertexShader}
     `
@@ -179,20 +214,23 @@ let m = new THREE.PointsMaterial({
       .replace(
         `#include <color_vertex>`,
         `#include <color_vertex>
-        float d = length(abs(layoutStar) / vec3(40., 10., 40));
-        d = clamp(d, 0., 1.);
-        vColor = mix(vec3(227., 155., 0.), vec3(100., 50., 255.), d) / 255.;
+        float d = length(abs(layoutStarB) / vec3(40.0, 10.0, 40.0));
+        d = clamp(d, 0.0, 1.0);
+        vColor = mix(vec3(227.0, 155.0, 0.0), vec3(100.0, 50.0, 255.0), d) / 255.0;
       `
       )
       .replace(
         `#include <begin_vertex>`,
         `#include <begin_vertex>
-        float localMorphA = clamp((morphA - shift.w * 0.12) / 0.88, 0., 1.);
-        float easeMorphA = localMorphA * localMorphA * (3. - 2. * localMorphA);
-        float localMorphB = clamp((morphB - shift.w * 0.12) / 0.88, 0., 1.);
-        float easeMorphB = localMorphB * localMorphB * (3. - 2. * localMorphB);
+        float localMorphA = clamp((morphA - shift.w * 0.12) / 0.88, 0.0, 1.0);
+        float easeMorphA = localMorphA * localMorphA * (3.0 - 2.0 * localMorphA);
+        float localMorphB = clamp((morphB - shift.w * 0.12) / 0.88, 0.0, 1.0);
+        float easeMorphB = localMorphB * localMorphB * (3.0 - 2.0 * localMorphB);
+        float localMorphC = clamp((morphC - shift.w * 0.12) / 0.88, 0.0, 1.0);
+        float easeMorphC = localMorphC * localMorphC * (3.0 - 2.0 * localMorphC);
         vec3 textStage = mix(layoutTextA, layoutTextB, easeMorphA);
-        transformed = mix(textStage, layoutStar, easeMorphB);
+        vec3 starStage = mix(layoutStarA, layoutStarB, easeMorphC);
+        transformed = mix(textStage, starStage, easeMorphB);
         float t = time;
         float moveT = mod(shift.x + shift.z * t, PI2);
         float moveS = mod(shift.y + shift.z * t, PI2);
@@ -213,7 +251,7 @@ let m = new THREE.PointsMaterial({
       )
       .replace(
         `vec4 diffuseColor = vec4( diffuse, opacity );`,
-        `vec4 diffuseColor = vec4( vColor, smoothstep(0.5, 0.1, d)/* * 0.5 + 0.5*/ );`
+        `vec4 diffuseColor = vec4(vColor, smoothstep(0.5, 0.1, d)/* * 0.5 + 0.5*/);`
       );
     //console.log(shader.fragmentShader);
   }
@@ -224,13 +262,35 @@ p.rotation.order = "ZYX";
 p.rotation.z = 0.2;
 scene.add(p);
 
+window.addEventListener("keydown", (e) => {
+  if (e.code === "Space" && !e.repeat) {
+    let elapsed = clock.getElapsedTime();
+    if (elapsed < TIMING.t1) TIMING.t1 = elapsed;
+    else if (elapsed < TIMING.t2) TIMING.t2 = elapsed;
+    else if (elapsed < TIMING.t3) TIMING.t3 = elapsed;
+    else {
+      TIMING.t3 = elapsed;
+      TIMING.flip = !TIMING.flip;
+    }
+  }
+});
+
 let clock = new THREE.Clock();
+
+function transfer(elapsed, start, duration) {
+  if (elapsed <= start) return 0;
+  let t = (elapsed - start) / duration;
+  t = THREE.MathUtils.clamp(t, 0, 1);
+  return Math.sin(t * Math.PI * 0.5);
+}
 
 renderer.setAnimationLoop(() => {
   controls.update();
   let elapsed = clock.getElapsedTime();
-  gu.morphA.value = transfer(elapsed, TIMING.holdA, TIMING.transAB);
-  gu.morphB.value = transfer(elapsed, TIMING.holdA + TIMING.transAB + TIMING.holdB, TIMING.transBS);
+  gu.morphA.value = transfer(elapsed, TIMING.t1, TIMING.dur);
+  gu.morphB.value = transfer(elapsed, TIMING.t2, TIMING.dur);
+  gu.morphC.value = transfer(elapsed, TIMING.t3, TIMING.dur);
+  gu.morphC.value = TIMING.flip ? 1 - gu.morphC.value : gu.morphC.value;
   gu.time.value = elapsed * Math.PI * 0.5;
   p.rotation.y = elapsed / 40.0;
   renderer.render(scene, camera);
