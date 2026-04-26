@@ -43,7 +43,10 @@ let gu = {
 let COLORS = [
   { from: new THREE.Color(227 / 255, 155 / 255, 0 / 255), to: new THREE.Color(100 / 255, 50 / 255, 255 / 255) },
   { from: new THREE.Color(238 / 255, 0 / 255, 255 / 255), to: new THREE.Color(52 / 255, 162 / 255, 255 / 255) },
-  { from: new THREE.Color(255 / 255, 0 / 255, 0 / 255), to: new THREE.Color(52 / 255, 255 / 255, 93 / 255) }
+  { from: new THREE.Color(255 / 255, 0 / 255, 0 / 255), to: new THREE.Color(52 / 255, 255 / 255, 93 / 255) },
+  { from: new THREE.Color(52 / 255, 0 / 255, 255 / 255), to: new THREE.Color(227 / 255, 155 / 255, 0 / 255) },
+  { from: new THREE.Color(0 / 255, 138 / 255, 255 / 255), to: new THREE.Color(245 / 255, 107 / 255, 255 / 255) },
+  { from: new THREE.Color(0 / 255, 255 / 255, 52 / 255), to: new THREE.Color(255 / 255, 84 / 255, 84 / 255) }
 ];
 let colorIdx = 0;
 
