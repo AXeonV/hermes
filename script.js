@@ -8,6 +8,8 @@ let renderer = new THREE.WebGLRenderer();
 renderer.setSize(innerWidth, innerHeight);
 document.body.appendChild(renderer.domElement);
 
+let clock = new THREE.Clock();
+
 function updateViewport() {
   camera.aspect = innerWidth / innerHeight;
   camera.updateProjectionMatrix();
@@ -18,7 +20,7 @@ window.addEventListener('resize', updateViewport);
 
 // let textureLoader = new THREE.TextureLoader();
 // let texture = textureLoader.load(
-// 	"./your-local-image.jpg",
+// 	"./background.jpg",
 // 	(texture) => {
 //	 	texture.mapping = THREE.EquirectangularReflectionMapping;
 //	 	scene.background = texture;
@@ -45,7 +47,7 @@ let TIMING = {
 };
 
 let SENTENCES = [
-  ["你好呀，", "生日快乐哟~"],
+  ["XX，祝你", "生日快乐哟~"],
   ["愿你笑容常在，", "每天幸福快乐！"]
 ];
 
@@ -208,16 +210,14 @@ let m = new THREE.PointsMaterial({
       attribute vec3 layoutStarA;
       attribute vec3 layoutStarB;
       varying vec3 vColor;
-      ${shader.vertexShader}
-    `
+      ${shader.vertexShader}`
       .replace(`gl_PointSize = size;`, `gl_PointSize = size * sizes;`)
       .replace(
         `#include <color_vertex>`,
         `#include <color_vertex>
         float d = length(abs(layoutStarB) / vec3(40.0, 10.0, 40.0));
         d = clamp(d, 0.0, 1.0);
-        vColor = mix(vec3(227.0, 155.0, 0.0), vec3(100.0, 50.0, 255.0), d) / 255.0;
-      `
+        vColor = mix(vec3(227.0, 155.0, 0.0), vec3(100.0, 50.0, 255.0), d) / 255.0;`
       )
       .replace(
         `#include <begin_vertex>`,
@@ -234,26 +234,20 @@ let m = new THREE.PointsMaterial({
         float t = time;
         float moveT = mod(shift.x + shift.z * t, PI2);
         float moveS = mod(shift.y + shift.z * t, PI2);
-        transformed += vec3(cos(moveS) * sin(moveT), cos(moveT), sin(moveS) * sin(moveT)) * shift.w;
-      `
+        transformed += vec3(cos(moveS) * sin(moveT), cos(moveT), sin(moveS) * sin(moveT)) * shift.w;`
       );
-    //console.log(shader.vertexShader);
     shader.fragmentShader = `
       varying vec3 vColor;
-      ${shader.fragmentShader}
-    `
+      ${shader.fragmentShader}`
       .replace(
         `#include <clipping_planes_fragment>`,
         `#include <clipping_planes_fragment>
-        float d = length(gl_PointCoord.xy - 0.5);
-        //if (d > 0.5) discard;
-      `
+        float d = length(gl_PointCoord.xy - 0.5);`
       )
       .replace(
         `vec4 diffuseColor = vec4( diffuse, opacity );`,
-        `vec4 diffuseColor = vec4(vColor, smoothstep(0.5, 0.1, d)/* * 0.5 + 0.5*/);`
+        `vec4 diffuseColor = vec4(vColor, smoothstep(0.5, 0.1, d));`
       );
-    //console.log(shader.fragmentShader);
   }
 });
 
@@ -274,8 +268,6 @@ window.addEventListener("keydown", (e) => {
     }
   }
 });
-
-let clock = new THREE.Clock();
 
 function transfer(elapsed, start, duration) {
   if (elapsed <= start) return 0;
