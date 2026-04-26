@@ -35,8 +35,17 @@ let gu = {
   time: { value: 0 },
   morphA: { value: 0 },
   morphB: { value: 0 },
-  morphC: { value: 0 }
+  morphC: { value: 0 },
+  colorF: { value: new THREE.Color(227 / 255, 155 / 255, 0 / 255) },
+  colorT: { value: new THREE.Color(100 / 255, 50 / 255, 255 / 255) }
 };
+
+let COLORS = [
+  { from: new THREE.Color(227 / 255, 155 / 255, 0 / 255), to: new THREE.Color(100 / 255, 50 / 255, 255 / 255) },
+  { from: new THREE.Color(238 / 255, 0 / 255, 255 / 255), to: new THREE.Color(52 / 255, 162 / 255, 255 / 255) },
+  { from: new THREE.Color(255 / 255, 0 / 255, 0 / 255), to: new THREE.Color(52 / 255, 255 / 255, 93 / 255) }
+];
+let colorIdx = 0;
 
 let TIMING = {
   dur: 3.0,
@@ -198,11 +207,15 @@ let m = new THREE.PointsMaterial({
     shader.uniforms.morphA = gu.morphA;
     shader.uniforms.morphB = gu.morphB;
     shader.uniforms.morphC = gu.morphC;
+    shader.uniforms.colorF = gu.colorF;
+    shader.uniforms.colorT = gu.colorT;
     shader.vertexShader = `
       uniform float time;
       uniform float morphA;
       uniform float morphB;
       uniform float morphC;
+      uniform vec3 colorF;
+      uniform vec3 colorT;
       attribute float sizes;
       attribute vec4 shift;
       attribute vec3 layoutTextA;
@@ -217,7 +230,7 @@ let m = new THREE.PointsMaterial({
         `#include <color_vertex>
         float d = length(abs(layoutStarB) / vec3(40.0, 10.0, 40.0));
         d = clamp(d, 0.0, 1.0);
-        vColor = mix(vec3(227.0, 155.0, 0.0), vec3(100.0, 50.0, 255.0), d) / 255.0;`
+        vColor = mix(colorF, colorT, d);`
       )
       .replace(
         `#include <begin_vertex>`,
@@ -257,6 +270,13 @@ p.rotation.z = 0.2;
 scene.add(p);
 
 window.addEventListener("keydown", (e) => {
+  if ((e.code === "KeyC") && !e.repeat) {
+    colorIdx = (colorIdx + 1) % COLORS.length;
+    gu.colorF.value.copy(COLORS[colorIdx].from);
+    gu.colorT.value.copy(COLORS[colorIdx].to);
+    e.preventDefault();
+  }
+
   if (e.code === "Space" && !e.repeat) {
     let elapsed = clock.getElapsedTime();
     if (elapsed < TIMING.t1) TIMING.t1 = elapsed;
@@ -266,6 +286,7 @@ window.addEventListener("keydown", (e) => {
       TIMING.t3 = elapsed;
       TIMING.flip = !TIMING.flip;
     }
+    e.preventDefault();
   }
 });
 
