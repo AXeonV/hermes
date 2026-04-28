@@ -52,9 +52,9 @@ let colorIdx = 0;
 
 let TIMING = {
   dur: 3.0,
-  t1: 10.0,
-  t2: 23.0,
-  t3: 52.0,
+  t1: 52.0,
+  t2: 52.0 + 13.0,
+  t3: 52.0 + 13.0 + 14.0,
   flip: false
 };
 
@@ -62,6 +62,8 @@ let SENTENCES = [
   ["XX，祝你", "生日快乐哟~"],
   ["愿你笑容常在，", "每天幸福快乐！"]
 ];
+
+let NPOINTS = 1314520;
 
 function buildTextLayout(lines) {
   let points = [];
@@ -99,7 +101,7 @@ function buildTextLayout(lines) {
 
   let cx = canvas.width * 0.5;
   let cy = canvas.height * 0.5;
-  for (let i = 0; i < 11e5; i++) {
+  for (let i = 0; i < NPOINTS; i++) {
     let pick = samples[Math.floor(Math.random() * samples.length)];
     let x = (pick[0] - cx) * pixelToWorld;
     let y = (cy - pick[1]) * pixelToWorld;
@@ -124,7 +126,6 @@ function buildStarALayout() {
     return p;
   });
 
-  let disList = [-3.0, 7.0, 17.0, 27.0];
   let tiltByRing = [
     new THREE.Matrix4().makeRotationX(THREE.MathUtils.degToRad(45)),
     new THREE.Matrix4().makeRotationX(THREE.MathUtils.degToRad(-45)),
@@ -132,17 +133,24 @@ function buildStarALayout() {
     new THREE.Matrix4().makeRotationZ(THREE.MathUtils.degToRad(-45))
   ];
   for (let i = 1; i <= 2e5; ++i) {
-    for (let j = 0; j < disList.length; j++) {
+    for (let t of tiltByRing) {
       let radius = Math.log2(i * 520.0) + 1.0;
       let theta = Math.random() * 2 * Math.PI;
       let h = (Math.random() - 0.5) * 2;
       let p = new THREE.Vector3(Math.cos(theta) * radius, h, Math.sin(theta) * radius);
-      p.applyMatrix4(tiltByRing[j]);
-
+      p.applyMatrix4(t);
       points.push(p);
       positions.push(p.x, p.y, p.z);
     }
   }
+
+  points = points.concat(new Array(NPOINTS - 11e5).fill().map(() => {
+    let p = new THREE.Vector3()
+      .randomDirection()
+      .multiplyScalar(Math.random() * 1314.0 + 52.0);
+    positions.push(p.x, p.y, p.z);
+    return p;
+  }));
 
   return { points, positions };
 }
@@ -173,6 +181,14 @@ function buildStarBLayout() {
     }
   }
 
+  points = points.concat(new Array(NPOINTS - 11e5).fill().map(() => {
+    let p = new THREE.Vector3()
+      .randomDirection()
+      .multiplyScalar(Math.random() * 1314.0 + 52.0);
+    positions.push(p.x, p.y, p.z);
+    return p;
+  }));
+
   return { points, positions };
 }
 
@@ -182,7 +198,7 @@ let textALayout = buildTextLayout(SENTENCES[0]);
 let textBLayout = buildTextLayout(SENTENCES[1]);
 let sizes = [];
 let shift = [];
-for (let i = 0; i < 11e5; i++) {
+for (let i = 0; i < NPOINTS; i++) {
   sizes.push(Math.random() * 1.5 + 0.5);
   shift.push(
     Math.random() * Math.PI,
