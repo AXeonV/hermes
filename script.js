@@ -1,3 +1,8 @@
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+THREE.ColorManagement.enabled = false; // input pipeline: back to Linear
+
 let scene = new THREE.Scene();
 scene.background = new THREE.Color(0x160016);
 
@@ -6,9 +11,10 @@ camera.position.set(0, 8, 42);
 
 let renderer = new THREE.WebGLRenderer();
 renderer.setSize(innerWidth, innerHeight);
+renderer.outputColorSpace = THREE.LinearSRGBColorSpace; // output pipeline: back to Linear instead of sRGB
 document.body.appendChild(renderer.domElement);
 
-let clock = new THREE.Clock();
+let timer = new THREE.Timer();
 
 function updateViewport() {
   camera.aspect = innerWidth / innerHeight;
@@ -27,7 +33,7 @@ window.addEventListener('resize', updateViewport);
 //	 }
 // );
 
-let controls = new THREE.OrbitControls(camera, renderer.domElement);
+let controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
 controls.enablePan = true;
 
@@ -272,13 +278,9 @@ let m = new THREE.PointsMaterial({
       varying vec3 vColor;
       ${shader.fragmentShader}`
       .replace(
-        `#include <clipping_planes_fragment>`,
-        `#include <clipping_planes_fragment>
-        float d = length(gl_PointCoord.xy - 0.5);`
-      )
-      .replace(
         `vec4 diffuseColor = vec4( diffuse, opacity );`,
-        `vec4 diffuseColor = vec4(vColor, smoothstep(0.5, 0.1, d));`
+        `float d = length(gl_PointCoord.xy - vec2(0.5));
+         vec4 diffuseColor = vec4(vColor, smoothstep(0.5, 0.1, d));`
       );
   }
 });
@@ -297,7 +299,7 @@ window.addEventListener("keydown", (e) => {
   }
 
   if (e.code === "Space" && !e.repeat) {
-    let elapsed = clock.getElapsedTime();
+    let elapsed = timer.getElapsed();
     if (elapsed < TIMING.t1) TIMING.t1 = elapsed;
     else if (elapsed < TIMING.t2) TIMING.t2 = elapsed;
     else if (elapsed < TIMING.t3) TIMING.t3 = elapsed;
@@ -317,8 +319,9 @@ function transfer(elapsed, start, duration) {
 }
 
 renderer.setAnimationLoop(() => {
+  timer.update();
   controls.update();
-  let elapsed = clock.getElapsedTime();
+  let elapsed = timer.getElapsed();
   gu.morphA.value = transfer(elapsed, TIMING.t1, TIMING.dur);
   gu.morphB.value = transfer(elapsed, TIMING.t2, TIMING.dur);
   gu.morphC.value = transfer(elapsed, TIMING.t3, TIMING.dur);
