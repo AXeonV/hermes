@@ -2,7 +2,7 @@
 <html lang="en" >
 <head>
   <meta charset="UTF-8">
-  <title>0530 Birthday Surprise</title>
+  <title>Starlight</title>
   <style>
     body {
       overflow: hidden;
@@ -11,9 +11,20 @@
   </style>
 </head>
 <body>
-  <script src="https://unpkg.com/three@0.136.0/build/three.min.js"></script>
-  <script src='https://unpkg.com/three@0.136.0/examples/js/controls/OrbitControls.js'></script>
-  <script>
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.184.0/build/three.module.js",
+        "OrbitControls": "https://unpkg.com/three@0.184.0/examples/jsm/controls/OrbitControls.js"
+      }
+    }
+  </script>
+  <script type="module">
+    import * as THREE from 'three';
+    import { OrbitControls } from 'OrbitControls';
+
+    THREE.ColorManagement.enabled = false;
+
     let scene = new THREE.Scene();
     scene.background = new THREE.Color(0x160016);
 
@@ -22,9 +33,10 @@
 
     let renderer = new THREE.WebGLRenderer();
     renderer.setSize(innerWidth, innerHeight);
+    renderer.outputColorSpace = THREE.LinearSRGBColorSpace;
     document.body.appendChild(renderer.domElement);
 
-    let clock = new THREE.Clock();
+    let timer = new THREE.Timer();
 
     function updateViewport() {
       camera.aspect = innerWidth / innerHeight;
@@ -34,16 +46,7 @@
 
     window.addEventListener('resize', updateViewport);
 
-    // let textureLoader = new THREE.TextureLoader();
-    // let texture = textureLoader.load(
-    // 	"./background.jpg",
-    // 	(texture) => {
-    //	 	texture.mapping = THREE.EquirectangularReflectionMapping;
-    //	 	scene.background = texture;
-    //	 }
-    // );
-
-    let controls = new THREE.OrbitControls(camera, renderer.domElement);
+    let controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
     controls.enablePan = true;
 
@@ -288,13 +291,9 @@
           varying vec3 vColor;
           ${shader.fragmentShader}`
           .replace(
-            `#include <clipping_planes_fragment>`,
-            `#include <clipping_planes_fragment>
-            float d = length(gl_PointCoord.xy - 0.5);`
-          )
-          .replace(
             `vec4 diffuseColor = vec4( diffuse, opacity );`,
-            `vec4 diffuseColor = vec4(vColor, smoothstep(0.5, 0.1, d));`
+            `float d = length(gl_PointCoord.xy - vec2(0.5));
+             vec4 diffuseColor = vec4(vColor, smoothstep(0.5, 0.1, d));`
           );
       }
     });
@@ -313,7 +312,7 @@
       }
 
       if (e.code === "Space" && !e.repeat) {
-        let elapsed = clock.getElapsedTime();
+        let elapsed = timer.getElapsed();
         if (elapsed < TIMING.t1) TIMING.t1 = elapsed;
         else if (elapsed < TIMING.t2) TIMING.t2 = elapsed;
         else if (elapsed < TIMING.t3) TIMING.t3 = elapsed;
@@ -333,8 +332,9 @@
     }
 
     renderer.setAnimationLoop(() => {
+      timer.update();
       controls.update();
-      let elapsed = clock.getElapsedTime();
+      let elapsed = timer.getElapsed();
       gu.morphA.value = transfer(elapsed, TIMING.t1, TIMING.dur);
       gu.morphB.value = transfer(elapsed, TIMING.t2, TIMING.dur);
       gu.morphC.value = transfer(elapsed, TIMING.t3, TIMING.dur);
