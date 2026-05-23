@@ -75,8 +75,8 @@
     };
 
     let SENTENCES = [
-      ["XX，祝你", "生日快乐哟~"],
-      ["愿你笑容常在，", "每天幸福快乐！"]
+      ["宇轩的破壳日哦", "祝你生日快乐哟"],
+      ["以后每天都要开心哦", "愿你再也没有烦恼啦"]
     ];
 
     let NPOINTS = 1314520;
@@ -86,8 +86,8 @@
       let positions = [];
 
       let canvas = document.createElement("canvas");
-      canvas.width = 2000;
-      canvas.height = 1000;
+      canvas.width = 2400;
+      canvas.height = 800;
       let ctx = canvas.getContext("2d");
 
       let fontSize = 200;
@@ -99,10 +99,13 @@
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
       ctx.font = `700 ${fontSize}px "YouYuan", "Microsoft YaHei", "PingFang SC", "Noto Sans CJK SC", sans-serif`;
+      let fontGap = fontSize * 0.3;
+      ctx.letterSpacing = `${fontGap}px`;
       let centerX = canvas.width * 0.5;
       let lineGap = fontSize * 1.2;
       ctx.fillText(lines[0], centerX, canvas.height * 0.5 - lineGap * 0.5);
       ctx.fillText(lines[1], centerX, canvas.height * 0.5 + lineGap * 0.5);
+      let textWidth = ctx.measureText(lines[0]).width;
 
       let data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
       let samples = [];
@@ -117,11 +120,15 @@
 
       let cx = canvas.width * 0.5;
       let cy = canvas.height * 0.5;
+      let radius = (textWidth * pixelToWorld) / (2 * Math.PI);
       for (let i = 0; i < NPOINTS; i++) {
         let pick = samples[Math.floor(Math.random() * samples.length)];
-        let x = (pick[0] - cx) * pixelToWorld;
+        let arcX = (pick[0] - cx) * pixelToWorld;
         let y = (cy - pick[1]) * pixelToWorld;
-        let z = (Math.random() - 0.5) * thickness;
+        let rOffset = (Math.random() - 0.5) * thickness;
+        let theta = arcX / radius;
+        let x = Math.sin(theta) * (radius + rOffset);
+        let z = Math.cos(theta) * (radius + rOffset);
         let p = new THREE.Vector3(x, y, z);
         points.push(p);
         positions.push(x, y, z);
