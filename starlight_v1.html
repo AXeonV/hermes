@@ -320,10 +320,19 @@
       }
 
       if (e.code === "Space" && !e.repeat) {
-        let elapsed = clock.getElapsedTime();
-        if (elapsed < TIMING.t1) TIMING.t1 = elapsed;
-        else if (elapsed < TIMING.t2) TIMING.t2 = elapsed;
-        else if (elapsed < TIMING.t3) TIMING.t3 = elapsed;
+        let elapsed = timer.getElapsed();
+        if (elapsed < TIMING.t1) {
+          TIMING.t1 = elapsed;
+          TIMING.t2 = 1314520;
+          TIMING.t3 = 5201314;
+        }
+        else if (elapsed < TIMING.t2) {
+          TIMING.t2 = elapsed;
+          TIMING.t3 = 5201314;
+        }
+        else if (elapsed < TIMING.t3) {
+          TIMING.t3 = elapsed;
+        }
         else {
           TIMING.t3 = elapsed;
           TIMING.flip = !TIMING.flip;

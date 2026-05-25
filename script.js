@@ -69,8 +69,6 @@ let SENTENCES = [
   ["以后每天都要开心哦", "愿你再也没有烦恼啦"]
 ];
 
-let NPOINTS = 1314520;
-
 function buildTextLayout(lines) {
   let points = [];
   let positions = [];
@@ -126,6 +124,8 @@ function buildTextLayout(lines) {
 
   return { points, positions };
 }
+
+let NPOINTS = 1314520;
 
 function buildStarALayout() {
   let points = [];
@@ -307,9 +307,18 @@ window.addEventListener("keydown", (e) => {
 
   if (e.code === "Space" && !e.repeat) {
     let elapsed = timer.getElapsed();
-    if (elapsed < TIMING.t1) TIMING.t1 = elapsed;
-    else if (elapsed < TIMING.t2) TIMING.t2 = elapsed;
-    else if (elapsed < TIMING.t3) TIMING.t3 = elapsed;
+    if (elapsed < TIMING.t1) {
+      TIMING.t1 = elapsed;
+      TIMING.t2 = 1314520;
+      TIMING.t3 = 5201314;
+    }
+    else if (elapsed < TIMING.t2) {
+      TIMING.t2 = elapsed;
+      TIMING.t3 = 5201314;
+    }
+    else if (elapsed < TIMING.t3) {
+      TIMING.t3 = elapsed;
+    }
     else {
       TIMING.t3 = elapsed;
       TIMING.flip = !TIMING.flip;
