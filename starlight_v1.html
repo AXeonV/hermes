@@ -67,7 +67,7 @@
     let colorIdx = 0;
 
     let TIMING = {
-      dur: 3.0,
+      dur: 4.0,
       t1: 52.0,
       t2: 52.0 + 13.0 * 14.0,
       t3: 52.0 + 13.0 * 14.0 + 13.0 * 14.0,
@@ -334,27 +334,29 @@
           TIMING.t3 = elapsed;
         }
         else {
-          TIMING.t3 = elapsed;
+          let dis = TIMING.dur - (elapsed - TIMING.t3);
+          if (dis < 0) dis = 0;
+          TIMING.t3 = elapsed - dis;
           TIMING.flip = !TIMING.flip;
         }
         e.preventDefault();
       }
     });
 
-    function transfer(elapsed, start, duration) {
-      if (elapsed <= start) return 0;
+    function transfer(elapsed, start, duration, is_t3) {
       let t = (elapsed - start) / duration;
       t = THREE.MathUtils.clamp(t, 0, 1);
-      return Math.sin(t * Math.PI * 0.5);
+      t = t * 2 + (is_t3 && TIMING.flip ? 1 : -1);
+      return (Math.sin(t * Math.PI * 0.5) + 1) * 0.5;
     }
 
     renderer.setAnimationLoop(() => {
+      timer.update();
       controls.update();
-      let elapsed = clock.getElapsedTime();
-      gu.morphA.value = transfer(elapsed, TIMING.t1, TIMING.dur);
-      gu.morphB.value = transfer(elapsed, TIMING.t2, TIMING.dur);
-      gu.morphC.value = transfer(elapsed, TIMING.t3, TIMING.dur);
-      gu.morphC.value = TIMING.flip ? 1 - gu.morphC.value : gu.morphC.value;
+      let elapsed = timer.getElapsed();
+      gu.morphA.value = transfer(elapsed, TIMING.t1, TIMING.dur, 0);
+      gu.morphB.value = transfer(elapsed, TIMING.t2, TIMING.dur, 0);
+      gu.morphC.value = transfer(elapsed, TIMING.t3, TIMING.dur, 1);
       gu.time.value = elapsed * Math.PI * 0.5;
       p.rotation.y = elapsed / 40.0;
       renderer.render(scene, camera);
